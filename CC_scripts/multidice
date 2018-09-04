@@ -1,0 +1,5 @@
+#!/bin/bash
+for n in `seq 1 10`; do
+  ./dice 10 1 100 &
+  sleep 5
+done

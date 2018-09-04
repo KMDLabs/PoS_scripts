@@ -1,0 +1,3 @@
+#!/bin/bash
+source ac
+komodo-cli -ac_name=$ac "${@}"
