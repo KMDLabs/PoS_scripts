@@ -19,8 +19,8 @@ printbalance () {
   echo "[$target] : $tgt_balance"
 }
 
-source=STAKEDG0
-target=STAKEDG1
+source=STAKED5W
+target=STAKED5S
 address="RMMav2AVse5XHPvDfTzRpMbFhK3GqFmtSN"
 amount=1
 
@@ -48,6 +48,7 @@ sentTX=`$cli_source sendrawtransaction $signedhex`
 # 5. Wait for a confirmation on source chain.
 waitforconfirm "$sentTX" "$cli_source"
 echo "[$source] : Confirmed export $sentTX"
+echo "$cli_source migrate_createimporttransaction $signedhex $payouts"
 
 # 6. Use migrate_createimporttransaction to create the import TX
 created=0
@@ -59,6 +60,7 @@ while [[ ${created} -eq 0 ]]; do
   sleep 60
 done
 echo "Create import transaction sucessful!"
+echo "komodo-cli migrate_completeimporttransaction $importTX"
 
 # 8. Use migrate_completeimporttransaction on KMD to complete the import tx
 created=0
@@ -70,6 +72,7 @@ while [[ $created -eq 0 ]]; do
   sleep 60
 done
 echo "Sign import transaction on KMD complete!"
+echo "$cli_target sendrawtransaction $completeTX"
 
 # 9. Broadcast tx to target chain
 sent=0
