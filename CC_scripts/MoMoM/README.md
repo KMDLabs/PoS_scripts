@@ -14,7 +14,7 @@ Komodo will  not be able to see notarizations back past the block you started it
 
 Fill out the address details you will be using in migratecoin.sh.
 
-Inside migratecoin.sh there is a place for Address and amount, this is the address the coins will move from and to make sure it is the same as the address in config.ini. Of course amount is the amount of coins  you are moving.
+Inside migratecoin.sh there is a place for Address and amount, this is the address the coins will move to on the target chain, make 100% sure the private key for this address imported on the target before you start Of course amount is the amount of coins  you are moving.
 
 To start the chains and KMD simply run: `start.sh`
 
