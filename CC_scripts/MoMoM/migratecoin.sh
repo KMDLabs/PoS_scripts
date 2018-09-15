@@ -30,7 +30,7 @@ cli_target="komodo-cli -ac_name=$target"
 cli_source="komodo-cli -ac_name=$source"
 
 printbalance
-echo "Sending $amount from $source to $target at ${date}"
+echo "Sending $amount from $source to $target at $(date)"
 
 # Raw tx that we will work with
 txraw=`$cli_source createrawtransaction "[]" "{\"$address\":$amount}"`
@@ -48,7 +48,7 @@ sentTX=`$cli_source sendrawtransaction $signedhex`
 
 # 5. Wait for a confirmation on source chain.
 waitforconfirm "$sentTX" "$cli_source"
-echo "[$source] : Confirmed export $sentTX at ${date}"
+echo "[$source] : Confirmed export $sentTX at at $(date)"
 echo "$cli_source migrate_createimporttransaction $signedhex $payouts"
 
 # 6. Use migrate_createimporttransaction to create the import TX
@@ -72,7 +72,7 @@ while [[ $created -eq 0 ]]; do
   fi
   sleep 60
 done
-echo "Sign import transaction on KMD complete at ${date}!"
+echo "Sign import transaction on KMD complete at $(date)!"
 echo "$cli_target sendrawtransaction $completeTX"
 
 # 9. Broadcast tx to target chain
@@ -86,6 +86,6 @@ while [[ $sent -eq 0 ]]; do
 done
 
 waitforconfirm "$sent_iTX" "$cli_target"
-echo "[$target] : Confirmed import $sent_iTX ${date}"
+echo "[$target] : Confirmed import $sent_iTX at $(date)"
 printbalance
 
