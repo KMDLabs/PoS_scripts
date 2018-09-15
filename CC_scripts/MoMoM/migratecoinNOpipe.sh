@@ -26,6 +26,7 @@ target=$(echo $ac_json | jq -r '.[0].ac_name')
 # Alias for running cli
 cli_target="komodo-cli -ac_name=$target"
 cli_source="komodo-cli -ac_name=$source"
+amount=1
 
 addresses=$($(echo komodo-cli -ac_name=$target listaddressgroupings))
 for row in $(echo "${addresses}" | jq -c -r '.[][]'); do
@@ -33,74 +34,70 @@ for row in $(echo "${addresses}" | jq -c -r '.[][]'); do
                 echo ${row} | jq -r ${1}
         }
         address=$(_jq '.[0]')
+        printbalance
+        echo "Sending $amount from $source to $target"
 
-	amount=1
+        echo "Raw tx that we will work with"
+        txraw=`$cli_source createrawtransaction "[]" "{\"$address\":$amount}"`
+        echo "$txraw txraw"
+        echo "Convert to an export tx"
+        exportData=`$cli_source migrate_converttoexport $txraw $target $amount`
+        echo "$exportData exportData"
+        exportRaw=`echo $exportData | jq -r .exportTx`
+        echo "$exportRaw exportRaw"
+        echo "Fund it"
+        exportFundedData=`$cli_source fundrawtransaction $exportRaw`
+        echo "$exportFundedData exportFundedData"
+        exportFundedTx=`echo $exportFundedData | jq -r .hex`
+        echo "$exportFundedTx exportFundedTx"
+        payouts=`echo $exportData | jq -r .payouts`
+        echo "$payouts payouts"
 
-	printbalance
-	echo "Sending $amount from $source to $target address $address at $(date)"
+        echo "4. Sign rawtx and export"
+        signedhex=`$cli_source signrawtransaction $exportFundedTx | jq -r .hex`
+        echo "$signedhex signedhex"
+        sentTX=`$cli_source sendrawtransaction $signedhex`
+        echo "$sentTX sentTX"
 
-	echo "Raw tx that we will work with"
-	txraw=`$cli_source createrawtransaction "[]" "{\"$address\":$amount}"`
-	echo "$txraw txraw"
-	echo "Convert to an export tx at $(date)"
-	exportData=`$cli_source migrate_converttoexport $txraw $target $amount`
-	echo "$exportData exportData"
-	exportRaw=`echo $exportData | jq -r .exportTx`
-	echo "$exportRaw exportRaw"
-	echo "Fund it at $(date)"
-	exportFundedData=`$cli_source fundrawtransaction $exportRaw`
-	echo "$exportFundedData exportFundedData"
-	exportFundedTx=`echo $exportFundedData | jq -r .hex`
-	echo "$exportFundedTx exportFundedTx"
-	payouts=`echo $exportData | jq -r .payouts`
-	echo "$payouts payouts"
+        echo "5. Wait for a confirmation on source chain."
+        waitforconfirm "$sentTX" "$cli_source"
+        echo "[$source] : Confirmed export $sentTX"
 
-	echo "4. Sign rawtx and export at $(date)"
-	signedhex=`$cli_source signrawtransaction $exportFundedTx | jq -r .hex`
-	echo "$signedhex signedhex"
-	sentTX=`$cli_source sendrawtransaction $signedhex`
-	echo "$sentTX sentTX"
+        echo " 6. Use migrate_createimporttransaction to create the import TX"
+        created=0
+        while [[ ${created} -eq 0 ]]; do
+          importTX=`$cli_source migrate_createimporttransaction $signedhex $payouts`
+          echo "$importTX importTX"
+          if [[ ${importTX} != "" ]]; then
+            created=1
+          fi
+          sleep 60
+        done
+        echo "importTX"
+        echo "Create import transaction sucessful!"
 
-	echo "5. Wait for a confirmation on source chain at $(date)"
-	waitforconfirm "$sentTX" "$cli_source"
-	echo "[$source] : Confirmed export $sentTX"
+        # 8. Use migrate_completeimporttransaction on KMD to complete the import tx
+        created=0
+        while [[ $created -eq 0 ]]; do
+          completeTX=`komodo-cli migrate_completeimporttransaction $importTX`
+          echo "$completeTX completeTX"
+          if [[ $completeTX != "" ]]; then
+            created=1
+          fi
+          sleep 60
+        done
+        echo "Sign import transaction on KMD complete!"
 
-	echo " 6. Use migrate_createimporttransaction to create the import TX at $(date)"
-  created=0
-  while [[ ${created} -eq 0 ]]; do
-   importTX=`$cli_source migrate_createimporttransaction $signedhex $payouts`
-   echo "$importTX importTX"
-   if [[ ${importTX} != "" ]]; then
-       created=1
-    fi
-    sleep 60
-  done
-  echo "importTX"
-  echo "Create import transaction sucessful! at $(date)"
-  
-  # 8. Use migrate_completeimporttransaction on KMD to complete the import tx
-  created=0
-  while [[ $created -eq 0 ]]; do
-    completeTX=`komodo-cli migrate_completeimporttransaction $importTX`
-    echo "$completeTX completeTX"
-    if [[ $completeTX != "" ]]; then
-      created=1
-    fi
-    sleep 60
-  done
-  echo "Sign import transaction on KMD complete at $(date)!"
-
- # 9. Broadcast tx to target chain
-  sent=0
-  while [[ $sent -eq 0 ]]; do
-    sent_iTX=`$cli_target sendrawtransaction $completeTX`
-    if [[ $sent_iTX != "" ]]; then
-      sent=1
-    fi
-    sleep 60
-  done
-
-  waitforconfirm "$sent_iTX" "$cli_target"
-  echo "[$target] : Confirmed import $sent_iTX"
-  printbalance
+        # 9. Broadcast tx to target chain
+        sent=0
+        while [[ $sent -eq 0 ]]; do
+          sent_iTX=`$cli_target sendrawtransaction $completeTX`
+          if [[ $sent_iTX != "" ]]; then
+            sent=1
+          fi
+          sleep 60
+        done
+        waitforconfirm "$sent_iTX" "$cli_target"
+        echo "[$target] : Confirmed import $sent_iTX"
+        printbalance
 done
