@@ -19,8 +19,9 @@ printbalance () {
   echo "[$target] : $tgt_balance"
 }
 
-source=STAKEDWW
-target=STAKEDBB
+ac_json=$(curl https://raw.githubusercontent.com/blackjok3rtt/StakedNotary/master/assetchains.json 2>/dev/null)
+source=$(echo $ac_json | jq -r '.[1].ac_name')
+target=$(echo $ac_json | jq -r '.[0].ac_name')
 address="RUpV4Mov3Soj34iVNq3hPMCoUFYtB1Jzuf"
 amount=1
 
