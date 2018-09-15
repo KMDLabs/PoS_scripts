@@ -60,7 +60,7 @@ while [[ ${created} -eq 0 ]]; do
   fi
   sleep 60
 done
-echo "Create import transaction sucessful at ${date}!"
+echo "Create import transaction sucessful at $(date)!"
 echo "komodo-cli migrate_completeimporttransaction $importTX"
 
 # 8. Use migrate_completeimporttransaction on KMD to complete the import tx
