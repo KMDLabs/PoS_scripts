@@ -30,7 +30,7 @@ cli_target="komodo-cli -ac_name=$target"
 cli_source="komodo-cli -ac_name=$source"
 
 printbalance
-echo "Sending $amount from $source to $target at $(date)"
+echo "Sending $amount from $source to $target addredd $address at $(date)"
 
 # Raw tx that we will work with
 txraw=`$cli_source createrawtransaction "[]" "{\"$address\":$amount}"`
