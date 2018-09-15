@@ -22,13 +22,20 @@ printbalance () {
 ac_json=$(curl https://raw.githubusercontent.com/blackjok3rtt/StakedNotary/master/assetchains.json 2>/dev/null)
 source=$(echo $ac_json | jq -r '.[1].ac_name')
 target=$(echo $ac_json | jq -r '.[0].ac_name')
-address=$($(echo komodo-cli -ac_name=$target listaddressgroupings) | jq -c -r '.[0][0][0]')
-amount=1
 
 # Alias for running cli
 cli_target="komodo-cli -ac_name=$target"
 cli_source="komodo-cli -ac_name=$source"
 
+addresses=$($(echo komodo-cli -ac_name=$target listaddressgroupings))
+for row in $(echo "${addresses}" | jq -c -r '.[][]'); do
+        _jq() {
+                echo ${row} | jq -r ${1}
+        }
+        address=$(_jq '.[0]')
+        
+
+	amount=1
 printbalance
 echo "Sending $amount from $source to $target addredd $address at $(date)"
 
