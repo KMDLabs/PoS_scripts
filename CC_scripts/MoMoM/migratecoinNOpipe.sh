@@ -35,7 +35,7 @@ for row in $(echo "${addresses}" | jq -c -r '.[][]'); do
         }
         address=$(_jq '.[0]')
         printbalance
-        echo "Sending $amount from $source to $target"
+        echo "Sending $amount from $source to $target address $address at $(date)"
 
         echo "Raw tx that we will work with"
         txraw=`$cli_source createrawtransaction "[]" "{\"$address\":$amount}"`
@@ -53,17 +53,17 @@ for row in $(echo "${addresses}" | jq -c -r '.[][]'); do
         payouts=`echo $exportData | jq -r .payouts`
         echo "$payouts payouts"
 
-        echo "4. Sign rawtx and export"
+        echo "4. Sign rawtx and export at $(date)"
         signedhex=`$cli_source signrawtransaction $exportFundedTx | jq -r .hex`
         echo "$signedhex signedhex"
         sentTX=`$cli_source sendrawtransaction $signedhex`
         echo "$sentTX sentTX"
 
-        echo "5. Wait for a confirmation on source chain."
+        echo "5. Wait for a confirmation on source chain. at $(date)"
         waitforconfirm "$sentTX" "$cli_source"
         echo "[$source] : Confirmed export $sentTX"
 
-        echo " 6. Use migrate_createimporttransaction to create the import TX"
+        echo " 6. Use migrate_createimporttransaction to create the import TX at $(date)"
         created=0
         while [[ ${created} -eq 0 ]]; do
           importTX=`$cli_source migrate_createimporttransaction $signedhex $payouts`
@@ -74,7 +74,7 @@ for row in $(echo "${addresses}" | jq -c -r '.[][]'); do
           sleep 60
         done
         echo "importTX"
-        echo "Create import transaction sucessful!"
+        echo "Create import transaction sucessful at $(date)!"
 
         # 8. Use migrate_completeimporttransaction on KMD to complete the import tx
         created=0
@@ -86,7 +86,7 @@ for row in $(echo "${addresses}" | jq -c -r '.[][]'); do
           fi
           sleep 60
         done
-        echo "Sign import transaction on KMD complete!"
+        echo "Sign import transaction on KMD complete at $(date)!"
 
         # 9. Broadcast tx to target chain
         sent=0
@@ -98,6 +98,6 @@ for row in $(echo "${addresses}" | jq -c -r '.[][]'); do
           sleep 60
         done
         waitforconfirm "$sent_iTX" "$cli_target"
-        echo "[$target] : Confirmed import $sent_iTX"
+        echo "[$target] : Confirmed import $sent_iTX at $(date)"
         printbalance
 done
