@@ -36,7 +36,7 @@ for row in $(echo "${addresses}" | jq -c -r '.[][]'); do
         address=$(_jq '.[0]')
 
   printbalance
-  echo "Sending $amount from $source to $target"
+  echo "Sending $amount from $source to $target $address at $(date)"
 
   # Raw tx that we will work with
   txraw=`$cli_source createrawtransaction "[]" "{\"$address\":$amount}"`
@@ -54,7 +54,7 @@ for row in $(echo "${addresses}" | jq -c -r '.[][]'); do
 
   # 5. Wait for a confirmation on source chain.
   waitforconfirm "$sentTX" "$cli_source"
-  echo "[$source] : Confirmed export $sentTX"
+  echo "[$source] : Confirmed export $sentTX at $(date)"
   echo "$cli_source migrate_createimporttransaction $signedhex $payouts"
 
   # 6. Use migrate_createimporttransaction to create the import TX
@@ -66,7 +66,7 @@ for row in $(echo "${addresses}" | jq -c -r '.[][]'); do
     fi
     sleep 60
   done
-  echo "Create import transaction sucessful!"
+  echo "Create import transaction sucessful at $(date)!"
   echo "komodo-cli migrate_completeimporttransaction $importTX"
 
   # 8. Use migrate_completeimporttransaction on KMD to complete the import tx
@@ -78,7 +78,7 @@ for row in $(echo "${addresses}" | jq -c -r '.[][]'); do
     fi
     sleep 60
   done
-  echo "Sign import transaction on KMD complete!"
+  echo "Sign import transaction on KMD complete at $(date)!"
   echo "$cli_target sendrawtransaction $completeTX"
 
   # 9. Broadcast tx to target chain
@@ -92,6 +92,6 @@ for row in $(echo "${addresses}" | jq -c -r '.[][]'); do
   done
 
   waitforconfirm "$sent_iTX" "$cli_target"
-  echo "[$target] : Confirmed import $sent_iTX"
+  echo "[$target] : Confirmed import $sent_iTX at $(date)"
   printbalance
 done
