@@ -19,8 +19,9 @@ printbalance () {
   echo "[$target] : $tgt_balance"
 }
 
-source=STAKED5WT
-target=STAKED5ST
+ac_json=$(curl https://raw.githubusercontent.com/blackjok3rtt/StakedNotary/master/assetchains.json 2>/dev/null)
+source=$(echo $ac_json | jq -r '.[1].ac_name')
+target=$(echo $ac_json | jq -r '.[0].ac_name')
 address="RBfjMT4avxP82YHfDrM5h1rZkYAbU1gmQn"
 amount=1
 
@@ -29,17 +30,17 @@ cli_target="komodo-cli -ac_name=$target"
 cli_source="komodo-cli -ac_name=$source"
 
 printbalance
-echo "Sending $amount from $source to $target"
+echo "Sending $amount from $source to $target at $(date)"
 
 echo "Raw tx that we will work with"
 txraw=`$cli_source createrawtransaction "[]" "{\"$address\":$amount}"`
 echo "$txraw txraw"
-echo "Convert to an export tx"
+echo "Convert to an export tx at $(date)"
 exportData=`$cli_source migrate_converttoexport $txraw $target $amount`
 echo "$exportData exportData"
 exportRaw=`echo $exportData | jq -r .exportTx`
 echo "$exportRaw exportRaw"
-echo "Fund it"
+echo "Fund it at $(date)"
 exportFundedData=`$cli_source fundrawtransaction $exportRaw`
 echo "$exportFundedData exportFundedData"
 exportFundedTx=`echo $exportFundedData | jq -r .hex`
@@ -47,17 +48,17 @@ echo "$exportFundedTx exportFundedTx"
 payouts=`echo $exportData | jq -r .payouts`
 echo "$payouts payouts"
 
-echo "4. Sign rawtx and export"
+echo "4. Sign rawtx and export at $(date)"
 signedhex=`$cli_source signrawtransaction $exportFundedTx | jq -r .hex`
 echo "$signedhex signedhex"
 sentTX=`$cli_source sendrawtransaction $signedhex`
 echo "$sentTX sentTX"
 
-echo "5. Wait for a confirmation on source chain."
+echo "5. Wait for a confirmation on source chain at $(date)"
 waitforconfirm "$sentTX" "$cli_source"
 echo "[$source] : Confirmed export $sentTX"
 
-echo " 6. Use migrate_createimporttransaction to create the import TX"
+echo " 6. Use migrate_createimporttransaction to create the import TX at $(date)"
 created=0
 while [[ ${created} -eq 0 ]]; do
   importTX=`$cli_source migrate_createimporttransaction $signedhex $payouts`
@@ -68,7 +69,7 @@ while [[ ${created} -eq 0 ]]; do
   sleep 60
 done
 echo "importTX"
-echo "Create import transaction sucessful!"
+echo "Create import transaction sucessful! at $(date)"
 
 # 8. Use migrate_completeimporttransaction on KMD to complete the import tx
 created=0
@@ -80,7 +81,7 @@ while [[ $created -eq 0 ]]; do
   fi
   sleep 60
 done
-echo "Sign import transaction on KMD complete!"
+echo "Sign import transaction on KMD complete at $(date)!"
 
 # 9. Broadcast tx to target chain
 sent=0
