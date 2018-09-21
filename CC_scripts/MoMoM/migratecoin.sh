@@ -19,21 +19,24 @@ printbalance () {
   echo "[$target] : $tgt_balance"
 }
 
-ac_json=$(curl https://raw.githubusercontent.com/blackjok3rtt/StakedNotary/master/assetchains.json 2>/dev/null)
-source=$(echo $ac_json | jq -r '.[1].ac_name')
-target=$(echo $ac_json | jq -r '.[0].ac_name')
+ac_json=$(curl https://raw.githubusercontent.com/StakedChain/StakedNotary/master/assetchains.json 2>/dev/null)
+#source=$(echo $ac_json | jq -r '.[1].ac_name')
+#target=$(echo $ac_json | jq -r '.[0].ac_name')
+source="STAKEDB1"
+target="STAKEDPERC"
 
 # Alias for running cli
 cli_target="komodo-cli -ac_name=$target"
 cli_source="komodo-cli -ac_name=$source"
-amount=1
+amount=5
 
 addresses=$($(echo komodo-cli -ac_name=$target listaddressgroupings))
-for row in $(echo "${addresses}" | jq -c -r '.[][]'); do
-        _jq() {
-                echo ${row} | jq -r ${1}
-        }
-        address=$(_jq '.[0]')
+#for row in $(echo "${addresses}" | jq -c -r '.[][]'); do
+ #       _jq() {
+  #              echo ${row} | jq -r ${1}
+   #     }
+    #    address=$(_jq '.[0]')
+address="RR69169b1DAyGkFZPaHk1iu4c6ufAnDqye"
 
   printbalance
   echo "Sending $amount from $source to $target $address at $(date)"
@@ -94,4 +97,4 @@ for row in $(echo "${addresses}" | jq -c -r '.[][]'); do
   waitforconfirm "$sent_iTX" "$cli_target"
   echo "[$target] : Confirmed import $sent_iTX at $(date)"
   printbalance
-done
+#done
