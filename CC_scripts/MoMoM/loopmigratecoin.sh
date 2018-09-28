@@ -1,5 +1,5 @@
 #!/bin/bash
-for i in `seq 1 100`; do
-  ./migratecoin.sh
-  sleep 30
+for i in `seq 1 10`; do
+  ./migratecoin.sh >> send_loop_$1
+  sleep $(( RANDOM % 90 + 30 ))
 done

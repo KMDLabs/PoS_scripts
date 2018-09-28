@@ -1,13 +1,13 @@
 #!/bin/bash
 # Fetch assetchains.json
-wget -qO assetchains.json https://raw.githubusercontent.com/blackjok3rtt/StakedNotary/master/assetchains.json
+wget -qO assetchains.json https://github.com/StakedChain/StakedNotary/blob/master/assetchains.json
 
 # Start KMD
 echo "[KMD] : Starting KMD"
 komodod & #> /dev/null 2>&1 &
 
 # Start assets
-./assetchains
+./assetchains $1
 
 # Validate Address on KMD + AC, will poll deamon until started then check if address is imported, if not import it.
 echo "[KMD] : Checking your address and importing it if required."
