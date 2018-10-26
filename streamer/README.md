@@ -1,6 +1,5 @@
 # Streamer example scripts
 
-
 ### Needed software versions:
 komodod from StakedChain/komodo branch: streamer_recv
 SuperNET from StakedChain/SuperNET branch: streamer2
