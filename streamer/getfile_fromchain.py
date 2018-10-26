@@ -62,7 +62,7 @@ else:
 KOMODODURL = def_credentials('TEST2')
 
 finished = 0
-curblock = startblock
+curblock = int(startblock)
 while finished == 0 :
     returnjson = getdatafromblock_rpc(KOMODODURL,curblock)
     pp.pprint(returnjson)
