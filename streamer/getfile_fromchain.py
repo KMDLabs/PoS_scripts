@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 import binascii
 import sys
 import re
@@ -61,9 +61,8 @@ KOMODODURL = def_credentials('TEST2')
 # get the data
 returnjson = getdatafromblock_rpc(KOMODODURL,block)
 
-pp.pprint(returnjson)
+datain = returnjson['result']['data']
 
-sys.exit()
 # convert hex string back to binary data
 dataout = binascii.a2b_hex(datain)
 

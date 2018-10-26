@@ -36,17 +36,17 @@ with open(filename, 'rb') as in_file:
     datain = in_file.read()
 
 # convert file to hex string
-dataout = binascii.hexlify(datain)
+dataout = binascii.hexlify(datain).decode("ascii")
 
 #Define streamerqadd API JSON
 queueadd = {
-	"userpass" : userpass,
-	"method" : "streamerqadd"
-    "data" : dataout
+    "userpass" : userpass,
+    "method" : "streamerqadd",
+    "data" : dataout,
     "seqid" : 1
 }
 
 #Send payload withdraw API
-response = post_rpc(mm_url,withdraw)
+response = post_rpc(mm_url,queueadd)
 print('== response ==')
 pp.pprint(response)
