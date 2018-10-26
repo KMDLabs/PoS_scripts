@@ -64,6 +64,7 @@ KOMODODURL = def_credentials('TEST2')
 finished = 0
 curblock = int(startblock)
 lastseqid = 0
+did1 = 0
 while True :
     returnjson = getdatafromblock_rpc(KOMODODURL,str(curblock))
     try:
@@ -72,6 +73,9 @@ while True :
         print("block ",curblock," is empty or does not exist. We have reached the end of this stream.")
         break
     firstseqid =  int(returnjson['result']['firstseqid'])
+    if firstseqid != 1 and did1 = 0:
+        print("not starting at the first block, please start at block:", str(returnjson['result']['firstblockheight']))
+        break
     if ( firstseqid != (lastseqid+1) ):
         print("first seq id in this block is not following the last in the last block.")
         break
@@ -84,3 +88,5 @@ while True :
         break
     lastseqid = int(returnjson['result']['lastseqid'])
     curblock = curblock + 1
+    if did1 = 0:
+        did1 = 1
