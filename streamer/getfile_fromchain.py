@@ -5,10 +5,13 @@ import re
 import os
 import requests
 import json
+import pprint
+
+# configure pretty printer
+pp = pprint.PrettyPrinter(width=41, compact=True)
 
 # define function that fetchs rpc creds from .conf
 def def_credentials(chain):
-
     #TODO: add osx/windows support for ac_dir
     ac_dir = os.environ['HOME'] + '/.komodo'
 
@@ -50,7 +53,7 @@ def getdatafromblock_rpc(RPCURL, block):
 # get arguments
 if len(sys.argv) > 2:
     filename = sys.argv[1]
-    block = sys.argv[2]
+    startblock = sys.argv[2]
 else:
     print('please specify path to output file to and block to extract from')
     sys.exit()
@@ -58,13 +61,17 @@ else:
 # get rpc creds to be able to contact komodod
 KOMODODURL = def_credentials('TEST2')
 
-# get the data
-returnjson = getdatafromblock_rpc(KOMODODURL,block)
-
-datain = returnjson['result']['data']
-
-# convert hex string back to binary data
-dataout = binascii.a2b_hex(datain)
-
-with open(filename, 'wb') as out_file:
-    out_file.write(dataout)
+finished = 0
+block = startblock
+while finished == 0 :
+    returnjson = getdatafromblock_rpc(KOMODODURL,block)
+    pp.pprint(returnjson)
+    try:
+        datain = returnjson['result']['data']
+    except Exception as e:
+        print("failed ",e)
+        finished == 1
+    block = block + 1
+    dataout = binascii.a2b_hex(datain)
+    with open(filename, 'a+') as out_file:
+        out_file.write(dataout)
