@@ -55,7 +55,7 @@ if len(sys.argv) > 2:
     filename = sys.argv[1]
     startblock = sys.argv[2]
 else:
-    print('please specify path to output file to and block to extract from')
+    print('please specify path to output file to and block to start from')
     sys.exit()
 
 # get rpc creds to be able to contact komodod
@@ -63,15 +63,24 @@ KOMODODURL = def_credentials('TEST2')
 
 finished = 0
 curblock = int(startblock)
+lastseqid = 0
 while True :
     returnjson = getdatafromblock_rpc(KOMODODURL,str(curblock))
     try:
         datain = returnjson['result']['data']
     except Exception as e:
-        print("failed ",e)
+        print("block ",curblock," is empty or does not exist. We have reached the end of this stream.")
         break
-    curblock = curblock + 1
-    pp.pprint(returnjson['result']['lastseqid'])
+    firstseqid =  int(returnjson['result']['firstseqid'])
+    if ( firstseqid != (lastseqid+1) ):
+        print("first seq id in this block is not following the last in the last block.")
+        break
     dataout = binascii.a2b_hex(datain)
-    with open(filename, 'ab') as out_file:
-        out_file.write(dataout)
+    try:
+        with open(filename, 'ab') as out_file:
+            out_file.write(dataout)
+    except Exception as e:
+        print("write to file failed")
+        break
+    lastseqid = int(returnjson['result']['lastseqid'])
+    curblock = curblock + 1
