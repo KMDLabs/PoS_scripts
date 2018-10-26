@@ -65,7 +65,7 @@ finished = 0
 curblock = int(startblock)
 while finished == 0 :
     returnjson = getdatafromblock_rpc(KOMODODURL,str(curblock))
-    pp.pprint(returnjson)
+    pp.pprint(returnjson['result']['lastseqid'])
     try:
         datain = returnjson['result']['data']
     except Exception as e:
