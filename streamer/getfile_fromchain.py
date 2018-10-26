@@ -73,7 +73,7 @@ while True :
         print("block ",curblock," is empty or does not exist. We have reached the end of this stream.")
         break
     firstseqid =  int(returnjson['result']['firstseqid'])
-    if firstseqid != 1 and did1 = 0:
+    if firstseqid != 1 and did1 == 0:
         print("not starting at the first block, please start at block:", str(returnjson['result']['firstblockheight']))
         break
     if ( firstseqid != (lastseqid+1) ):
