@@ -88,5 +88,5 @@ while True :
         break
     lastseqid = int(returnjson['result']['lastseqid'])
     curblock = curblock + 1
-    if did1 = 0:
+    if did1 == 0:
         did1 = 1
