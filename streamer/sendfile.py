@@ -8,6 +8,7 @@ import sys
 # config area
 mm_ip = '127.0.0.1'
 mm_port = '7782'
+CHUNKSIZE = 2000000 # 2MB chunks.
 # end of config area
 
 #Define marketmaker URL
@@ -32,21 +33,25 @@ else:
     print('please spscify path to file')
     sys.exit()
 
-with open(filename, 'rb') as in_file:
-    datain = in_file.read()
+in_file = open(filename, 'rb')
+while True:
+    datain = in_file.read(CHUNKSIZE)
+    if not piece:
+        break
+    # convert file to hex string
+    dataout = binascii.hexlify(datain).decode("ascii")
 
-# convert file to hex string
-dataout = binascii.hexlify(datain).decode("ascii")
+    #Define streamerqadd API JSON
+    queueadd = {
+        "userpass" : userpass,
+        "method" : "streamerqadd",
+        "data" : dataout,
+        "seqid" : 1
+    }
 
-#Define streamerqadd API JSON
-queueadd = {
-    "userpass" : userpass,
-    "method" : "streamerqadd",
-    "data" : dataout,
-    "seqid" : 1
-}
+    #Send payload withdraw API
+    response = post_rpc(mm_url,queueadd)
+    print('== response ==')
+    pp.pprint(response)
 
-#Send payload withdraw API
-response = post_rpc(mm_url,queueadd)
-print('== response ==')
-pp.pprint(response)
+in_file.close()
