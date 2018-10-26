@@ -73,5 +73,5 @@ while finished == 0 :
         finished == 1
     curblock = curblock + 1
     dataout = binascii.a2b_hex(datain)
-    with open(filename, 'a+') as out_file:
+    with open(filename, 'ab') as out_file:
         out_file.write(dataout)
