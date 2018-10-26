@@ -62,16 +62,16 @@ else:
 KOMODODURL = def_credentials('TEST2')
 
 finished = 0
-block = startblock
+curblock = startblock
 while finished == 0 :
-    returnjson = getdatafromblock_rpc(KOMODODURL,block)
+    returnjson = getdatafromblock_rpc(KOMODODURL,curblock)
     pp.pprint(returnjson)
     try:
         datain = returnjson['result']['data']
     except Exception as e:
         print("failed ",e)
         finished == 1
-    block = block + 1
+    curblock = curblock + 1
     dataout = binascii.a2b_hex(datain)
     with open(filename, 'a+') as out_file:
         out_file.write(dataout)
