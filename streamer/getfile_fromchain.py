@@ -70,7 +70,7 @@ while finished == 0 :
         datain = returnjson['result']['data']
     except Exception as e:
         print("failed ",e)
-        finished == 1
+        finished = 1
     curblock = curblock + 1
     dataout = binascii.a2b_hex(datain)
     with open(filename, 'ab') as out_file:
