@@ -65,13 +65,13 @@ finished = 0
 curblock = int(startblock)
 while finished == 0 :
     returnjson = getdatafromblock_rpc(KOMODODURL,str(curblock))
-    pp.pprint(returnjson['result']['lastseqid'])
     try:
         datain = returnjson['result']['data']
     except Exception as e:
         print("failed ",e)
         finished = 1
     curblock = curblock + 1
+    pp.pprint(returnjson['result']['lastseqid'])
     dataout = binascii.a2b_hex(datain)
     with open(filename, 'ab') as out_file:
         out_file.write(dataout)
