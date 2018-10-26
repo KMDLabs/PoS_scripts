@@ -34,9 +34,10 @@ else:
     sys.exit()
 
 in_file = open(filename, 'rb')
+i = 1
 while True:
     datain = in_file.read(CHUNKSIZE)
-    if not piece:
+    if not datain:
         break
     # convert file to hex string
     dataout = binascii.hexlify(datain).decode("ascii")
@@ -46,12 +47,13 @@ while True:
         "userpass" : userpass,
         "method" : "streamerqadd",
         "data" : dataout,
-        "seqid" : 1
+        "seqid" : i
     }
 
     #Send payload withdraw API
     response = post_rpc(mm_url,queueadd)
     print('== response ==')
     pp.pprint(response)
+    i = i + 1
 
 in_file.close()
