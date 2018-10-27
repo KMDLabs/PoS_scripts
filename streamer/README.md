@@ -1,15 +1,19 @@
 # Streamer example scripts
 
-
 ### Needed software versions:
 komodod from StakedChain/komodo branch: streamer_recv
+
 SuperNET from StakedChain/SuperNET branch: streamer2
+
 This repo for control scripts.
 
 ### To create your chain
 Need -ac_name=<name> -ac_stream=1 and -ac_pubkey=03xxx...
+
 ac_supply will default to 100k if you dont set it.
+
 You need to import the private key for your ac_pubkey BEFORE block 128 or you cannot mine any blocks past 128.
+
 DO NOT use -pubkey on the mining node, only -ac_pubkey *I think* maybe try this and see what happens?
 
 ### To activate the blaster loop
