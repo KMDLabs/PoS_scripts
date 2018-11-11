@@ -1,16 +1,15 @@
 # Streamer example scripts
 
 ### Needed software versions:
-komodod from StakedChain/komodo branch: streamer_recv
+komodod from StakedChain/komodo branch: mastertest
 
 SuperNET from StakedChain/SuperNET branch: streamer2
 
 This repo for control scripts.
 
 ### To create your chain
-Need -ac_name=<name> -ac_stream=1 and -ac_pubkey=03xxx...
-
-ac_supply will default to 100k if you dont set it.
+Need -ac_name=<name> -ac_stream=2 and -ac_pubkey=03xxx... 
+ac_supply will default to 100k if you dont set it. -ac_stream=1 is a private chain without easy mining (very fast blocks) ac_stream=2 is easy difficulty, allowing extreamly fast blocks, for streaming lots of data.
 
 You need to import the private key for your ac_pubkey BEFORE block 128 or you cannot mine any blocks past 128.
 
