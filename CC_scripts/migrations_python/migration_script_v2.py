@@ -1,8 +1,37 @@
+#!/usr/bin/env python3
+
 from slickrpc import Proxy
 import time
 import sys
 import datetime
+import os
+import json
+import re
+import platform
 
+def selectRangeInt(low,high, msg): 
+    while True:
+        try:
+            number = int(input(msg))
+        except ValueError:
+            print("integer only, try again")
+            continue
+        if low <= number <= high:
+            return number
+        else:
+            print("input outside range, try again")
+
+def selectRangeFloat(low,high, msg): 
+    while True:
+        try:
+            number = float(input(msg))
+        except ValueError:
+            print("integer only, try again")
+            continue
+        if low <= number <= high:
+            return number
+        else:
+            print("input outside range, try again")
 
 def print_balance(rpc_connection_source, rpc_connection_destination):
     balance_source = rpc_connection_source.getbalance()
@@ -68,15 +97,64 @@ def broadcast_on_destinationchain(rpc_connection, complete_tx, dest_tx_list):
             sys.exit()
     return is_broadcasted
 
+# define function that fetchs rpc creds from .conf
+def def_credentials(chain):
+    rpcport ='';
+    operating_system = platform.system()
+    if operating_system == 'Darwin':
+        ac_dir = os.environ['HOME'] + '/Library/Application Support/Komodo'
+    elif operating_system == 'Linux':
+        ac_dir = os.environ['HOME'] + '/.komodo'
+    elif operating_system == 'Win64':
+        ac_dir = "dont have windows machine now to test"
+    if chain == 'KMD':
+        coin_config_file = str(ac_dir + '/komodo.conf')
+    else:
+        coin_config_file = str(ac_dir + '/' + chain + '/' + chain + '.conf')
+    with open(coin_config_file, 'r') as f:
+        for line in f:
+            l = line.rstrip()
+            if re.search('rpcuser', l):
+                rpcuser = l.replace('rpcuser=', '')
+            elif re.search('rpcpassword', l):
+                rpcpassword = l.replace('rpcpassword=', '')
+            elif re.search('rpcport', l):
+                rpcport = l.replace('rpcport=', '')
+    if len(rpcport) == 0:
+        print("rpcport not in conf file, exiting")
+        print("check "+coin_config_file)
+        exit(1)
 
-# SET RPC CONNECTION DETAILS HERE
-rpc_connection_sourcechain = Proxy("http://%s:%s@127.0.0.1:%d"%("user", "password", 30667))
-rpc_connection_destinationchain = Proxy("http://%s:%s@127.0.0.1:%d"%("user", "password", 50609))
-rpc_connection_kmdblockchain = Proxy("http://%s:%s@127.0.0.1:%d"%("user", "password", 7771))
-# SET ADDRESS AND MIGRATION AMOUNT HERE
+    return(Proxy("http://%s:%s@127.0.0.1:%d"%(rpcuser, rpcpassword, int(rpcport))))
+
+assetChains = []
+ID=1
+HOME = os.environ['HOME']
+with open(HOME + '/StakedNotary/assetchains.json') as file:
+    assetchains = json.load(file)
+for chain in assetchains:
+    print(str(ID).rjust(3) + ' | ' + chain['ac_name'].ljust(12))
+    ID+=1
+    assetChains.append(chain['ac_name'])
+src_chain = selectRangeInt(1,len(assetchains),"Select source chain: ")
+
+rpc_connection_sourcechain = def_credentials(assetChains[src_chain-1])
+ID=1
+for chain in assetchains:
+    print(str(ID).rjust(3) + ' | ' + chain['ac_name'].ljust(12))
+    ID+=1
+dest_chain = selectRangeInt(1,len(assetchains),"Select destination chain: ")
+rpc_connection_destinationchain = def_credentials(assetChains[dest_chain-1])
+
+rpc_connection_kmdblockchain = def_credentials('KMD')
+migrations_amount = selectRangeInt(1,1000,"How many migrations?: ")
+balance=rpc_connection_sourcechain.getbalance()
+max_per_loop=balance/migrations_amount
+amount = selectRangeFloat(0,max_per_loop,"Amount of funds to send per migration (max: "+str(max_per_loop)+"): ")
+
+
+# SET ADDRESS HERE
 address = "RHq3JsvLxU45Z8ufYS6RsDpSG4wi6ucDev"
-amount = 0.001
-migrations_amount = 500
 
 t0 = time.time()
 
@@ -175,4 +253,4 @@ for sent_itx in dest_txs:
 
 t1 = time.time()
 print("Total migrations amount: " + str(migrations_amount))
-print(str(t1-t0) + " migration time (sec)")
+print(str(t1-t0) + " migration time (sec)") 
