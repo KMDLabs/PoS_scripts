@@ -8,6 +8,7 @@ import os
 import json
 import re
 import platform
+import calendar
 
 def selectRangeInt(low,high, msg): 
     while True:
@@ -188,6 +189,18 @@ while counter_raw > 0:
         sys.exit()
     sent_tx_list.append(sent_tx)
     counter_raw = counter_raw - 1
+
+# saving payouts and export txids to files
+payouts_filename = "payouts_"+str(calendar.timegm(time.gmtime()))+".txt"
+with open(payouts_filename, "a+") as payouts_file:
+    payouts_file.writelines(payouts_list)
+
+export_filename = "export_transactions_"+str(calendar.timegm(time.gmtime()))+".txt"
+with open(export_filename, "a+") as export_transactions_file:
+    export_transactions_file.writelines(sent_tx_list)
+
+print("Payouts saved to: " + payouts_filename + "\n")
+print("Export txids saved to: " + export_filename + "\n")
 
 print(str(len(sent_tx_list)) + " export transactions sent:\n")
 for sent_tx in sent_tx_list:
