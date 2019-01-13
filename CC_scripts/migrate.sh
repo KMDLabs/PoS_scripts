@@ -288,14 +288,14 @@ waitforconfirm "$sent_iTX" "$cli_target"
 runTime=$(echo $SECONDS-$initTime|bc)
 
 
-import_blkhash=$($cli_tgt gettransaction $sent_iTX | jq '.blockhash')
-import_blkheight=$($cli_tgt getblock $import_blkhash | jq '.height')
-import_blktime=$($cli_tgt getblock $import_blkhash | jq '.time')
-import_info=$($cli_tgt getimports $import_block)
+import_blkhash=$($cli_target gettransaction $sent_iTX | jq '.blockhash')
+import_blkheight=$($cli_target getblock $import_blkhash | jq '.height')
+import_blktime=$($cli_target getblock $import_blkhash | jq '.time')
+import_info=$($cli_target getimports $import_block)
 
-export_blkhash=$($cli_src gettransaction $sent_TX | jq '.blockhash')
-export_blkheight=$($cli_src getblock $export_blkhash | jq '.height')
-export_blktime=$($cli_src getblock $import_blkhash | jq '.time')
+export_blkhash=$($cli_source gettransaction $sent_TX | jq '.blockhash')
+export_blkheight=$($cli_source getblock $export_blkhash | jq '.height')
+export_blktime=$($cli_source getblock $import_blkhash | jq '.time')
 
 migrate_json='{"export_txid":"'${sentTX}'","import_txid":"'${sent_iTX}'","amount":'${amount}',"to_address":"'${trg_addr}'","from_chain":"'${source}'","to_chain":"'${target}'","export_blkheight":"'${export_blkheight}'","import_blkheight":"'${import_blkheight}'"}'
 echo "migrate_json: $migrate_json"
