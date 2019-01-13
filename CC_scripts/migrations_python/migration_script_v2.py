@@ -10,7 +10,7 @@ import re
 import platform
 import calendar
 
-def selectRangeInt(low,high, msg): 
+def selectRangeInt(low,high, msg):
     while True:
         try:
             number = int(input(msg))
@@ -22,7 +22,7 @@ def selectRangeInt(low,high, msg):
         else:
             print("input outside range, try again")
 
-def selectRangeFloat(low,high, msg): 
+def selectRangeFloat(low,high, msg):
     while True:
         try:
             number = float(input(msg))
@@ -135,8 +135,16 @@ assetChains = []
 ccids = []
 ID=1
 HOME = os.environ['HOME']
-with open(HOME + '/StakedNotary/assetchains.json') as file:
-    assetchains = json.load(file)
+
+try:
+    with open(HOME + '/StakedNotary/assetchains.json') as file:
+        assetchains = json.load(file)
+except Exception as e:
+    print(e)
+    print("Trying alternate location for file")
+    with open(HOME + '/staked/assetchains.json') as file:
+        assetchains = json.load(file)
+
 for chain in assetchains:
     print(str(ID).rjust(3) + ' | ' + (chain['ac_name']+" ("+chain['ac_cc']+")").ljust(12))
     ID+=1
@@ -186,6 +194,7 @@ counter_raw = migrations_amount
 sent_tx_list = []
 payouts_list = []
 signed_hex_list = []
+signed_hex_str_list = []
 while counter_raw > 0:
     raw_transaction = rpc_connection_sourcechain.createrawtransaction([], {address: amount})
     export_data = rpc_connection_sourcechain.migrate_converttoexport(raw_transaction, rpc_connection_destinationchain.getinfo()["name"])
@@ -196,6 +205,7 @@ while counter_raw > 0:
     payouts_list.append(payouts)
     signed_hex = rpc_connection_sourcechain.signrawtransaction(export_funded_transaction)
     signed_hex_list.append(signed_hex)
+    signed_hex_str_list.append(str(signed_hex))
     sent_tx = rpc_connection_sourcechain.sendrawtransaction(signed_hex["hex"])
     if len(sent_tx) != 64:
         print(signed_hex)
@@ -206,13 +216,19 @@ while counter_raw > 0:
     counter_raw = counter_raw - 1
 
 # saving payouts and export txids to files
+# Required - export tx Hex's and Payouts
+
 payouts_filename = "payouts_"+str(calendar.timegm(time.gmtime()))+".txt"
 with open(payouts_filename, "a+") as payouts_file:
-    payouts_file.writelines(payouts_list)
+    payouts_file.writelines("%s\n" % payouts for payouts in payouts_list)
 
 export_filename = "export_transactions_"+str(calendar.timegm(time.gmtime()))+".txt"
 with open(export_filename, "a+") as export_transactions_file:
-    export_transactions_file.writelines(sent_tx_list)
+    export_transactions_file.writelines("%s\n" % sent_tx for sent_tx in sent_tx_list)
+
+hex_filename = "export_hex_"+str(calendar.timegm(time.gmtime()))+".txt"
+with open(hex_filename, "a+") as export_hex_str_file:
+    export_hex_str_file.writelines("%s\n" % signed_hex for signed_hex in signed_hex_str_list)
 
 print("Payouts saved to: " + payouts_filename + "\n")
 print("Export txids saved to: " + export_filename + "\n")
@@ -284,4 +300,4 @@ for sent_itx in dest_txs:
 
 t1 = time.time()
 print("Total migrations amount: " + str(migrations_amount))
-print(str(t1-t0) + " migration time (sec)") 
+print(str(t1-t0) + " migration time (sec)")
