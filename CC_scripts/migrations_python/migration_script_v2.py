@@ -132,33 +132,48 @@ def def_credentials(chain):
     return(Proxy("http://%s:%s@127.0.0.1:%d"%(rpcuser, rpcpassword, int(rpcport))))
 
 assetChains = []
+ccids = []
 ID=1
 HOME = os.environ['HOME']
 with open(HOME + '/StakedNotary/assetchains.json') as file:
     assetchains = json.load(file)
 for chain in assetchains:
-    print(str(ID).rjust(3) + ' | ' + chain['ac_name'].ljust(12))
+    print(str(ID).rjust(3) + ' | ' + (chain['ac_name']+" ("+chain['ac_cc']+")").ljust(12))
     ID+=1
     assetChains.append(chain['ac_name'])
-src_chain = selectRangeInt(1,len(assetchains),"Select source chain: ")
+    ccids.append(chain['ac_cc'])
+src_index = selectRangeInt(1,len(assetChains),"Select source chain: ")
+src_chain = assetChains[src_index-1]
+rpc_connection_sourcechain = def_credentials(src_chain)
 
-rpc_connection_sourcechain = def_credentials(assetChains[src_chain-1])
+ccid=ccids[src_index-1]
+assetChains = []
 ID=1
 for chain in assetchains:
-    print(str(ID).rjust(3) + ' | ' + chain['ac_name'].ljust(12))
-    ID+=1
-dest_chain = selectRangeInt(1,len(assetchains),"Select destination chain: ")
+    if ccid == chain['ac_cc'] and src_chain != chain['ac_name']:
+        print(str(ID).rjust(3) + ' | ' + (chain['ac_name']+" ("+chain['ac_cc']+")").ljust(12))
+        ID+=1
+        assetChains.append(chain['ac_name'])
+if ID != 1:
+    dest_chain = selectRangeInt(1,len(assetChains),"Select destination chain: ")
+else:
+    print('No other asset chains with the same cc_id to migrate to, exiting')
+    exit(0)
 rpc_connection_destinationchain = def_credentials(assetChains[dest_chain-1])
 
 rpc_connection_kmdblockchain = def_credentials('KMD')
-migrations_amount = selectRangeInt(1,1000,"How many migrations?: ")
+migrations_amount = selectRangeInt(1,5000,"How many migrations?: ")
 balance=rpc_connection_sourcechain.getbalance()
 max_per_loop=balance/migrations_amount
 amount = selectRangeFloat(0,max_per_loop,"Amount of funds to send per migration (max: "+str(max_per_loop)+"): ")
 
+addresses = rpc_connection_destinationchain.listaddressgroupings()
+
+address = addresses[0][0][0]
+print('sending to '+address)
 
 # SET ADDRESS HERE
-address = "RHq3JsvLxU45Z8ufYS6RsDpSG4wi6ucDev"
+#address = "RHq3JsvLxU45Z8ufYS6RsDpSG4wi6ucDev"
 
 t0 = time.time()
 
