@@ -138,7 +138,7 @@ printbalance
 txraw=$($cli_source createrawtransaction "[]" "{\"$trg_addr\":$amount}")
 echo "-------------createrawtransaction----------------------"
 echo -e "${col_blue}"
-echo -e 'createrawtransaction '${col_dkgrey}'"[]" "{\"'$trg_addr'\":'$amount'}"'
+echo -e $cli_source' createrawtransaction '${col_dkgrey}'"[]" "{\"'$trg_addr'\":'$amount'}"'
 echo -e "${col_yellow}RETURNS txraw:${col_ltred} $txraw ${col_default}"
 echo "-----------------------------------------------------"
 # Convert to an export tx
@@ -148,7 +148,7 @@ exportTx=`echo $exportData | jq -r .exportTx`
 payouts=`echo $exportData | jq -r .payouts`
 echo "-------------migrate_converttoexport-----------------"
 echo -e "${col_blue}"
-echo -e "migrate_converttoexport ${col_ltred}$txraw ${col_dkgrey}$target"
+echo -e "$cli_source migrate_converttoexport ${col_ltred}$txraw ${col_dkgrey}$target"
 echo -e "${col_yellow}RETURNS exportTx:${col_cyan} $exportTx"
 echo -e "${col_yellow}RETURNS payouts:${col_magenta} $payouts ${col_default}"
 echo "-----------------------------------------------------"
@@ -160,7 +160,7 @@ echo "exportFundedData: $exportFundedData" >> $result_logfile
 echo "exportFundedTx: $exportFundedTx" >> $result_logfile
 echo "-------------fundrawtransaction----------------------"
 echo -e "${col_blue}"
-echo -e "fundrawtransaction ${col_cyan} $exportTx"
+echo -e "$cli_source fundrawtransaction ${col_cyan} $exportTx"
 echo -e "${col_yellow}RETURNS exportFundedData:${col_dkgrey} $exportFundedData"
 echo -e "${col_yellow}RETURNS exportFundedTx:${col_red} $exportFundedTx ${col_default}"
 echo "-----------------------------------------------------"
@@ -171,7 +171,7 @@ signedhex=`echo $signedtx | jq -r .hex`
 echo "signedhex: $signedhex" >> $result_logfile
 echo "-------------signrawtransaction----------------------"
 echo -e "${col_cyan}"
-echo -e "signrawtransaction ${col_red} $exportFundedTx"
+echo -e "$cli_source signrawtransaction ${col_red} $exportFundedTx"
 echo -e "${col_yellow}RETURNS signedtx:${col_dkgrey} $signedtx"
 echo -e "${col_yellow}RETURNS signedhex:${col_green} $signedhex ${col_default}"
 echo "-----------------------------------------------------"
@@ -180,7 +180,7 @@ sentTX=`$cli_source sendrawtransaction $signedhex`
 echo "sentTX: $sentTX" >> $result_logfile
 echo "-------------sendrawtransaction----------------------"
 echo -e "${col_cyan}"
-echo -e "sendrawtransaction ${col_green}$signedhex"
+echo -e "$cli_source sendrawtransaction ${col_green}$signedhex"
 echo -e "${col_yellow}RETURNS sentTX:${col_ltred} $sentTX ${col_default}"
 echo "-----------------------------------------------------"
 
@@ -212,7 +212,7 @@ while [[ ${created} -eq 0 ]]; do
 done
 echo "-------------migrate_createimporttransaction---------------"
 echo -e "${col_cyan}"
-echo -e "migrate_createimporttransaction ${col_green} $signedhex ${col_magenta} $payouts"
+echo -e "$cli_source migrate_createimporttransaction ${col_green} $signedhex ${col_magenta} $payouts"
 echo -e "${col_yellow}RETURNS importTX:${col_green} $importTX"
 echo "-----------------------------------------------------------"
 echo -e "${col_green}Create import transaction successful! ${runTime} sec${col_default}"
@@ -233,7 +233,7 @@ while [[ $created -eq 0 ]]; do
 done
 echo "-------------migrate_completeimporttransaction---------------"
 echo -e "${col_cyan}"
-echo -e "migrate_completeimporttransaction ${col_green} $importTX"
+echo -e "komodo-cli migrate_completeimporttransaction ${col_green} $importTX"
 echo -e "${col_yellow}RETURNS completeTX:${col_ltred} $completeTX${col_default}"
 echo "-----------------------------------------------------------"
 echo "completeTX: $completeTX" >> $result_logfile
@@ -280,7 +280,7 @@ while [[ $sent -eq 0 ]]; do
 done
 echo "-------------sendrawtransaction----------------------"
 echo -e "${col_cyan}"
-echo -e "sendrawtransaction ${col_ltred} $completeTX"
+echo -e "$cli_target sendrawtransaction ${col_ltred} $completeTX"
 echo -e "${col_yellow}RETURNS sent_iTX:${col_blue} $sent_iTX ${col_default}"
 echo "-----------------------------------------------------"
 
@@ -288,21 +288,40 @@ waitforconfirm "$sent_iTX" "$cli_target"
 runTime=$(echo $SECONDS-$initTime|bc)
 
 
-import_blkhash=$($cli_target gettransaction $sent_iTX | jq '.blockhash')
-import_blkheight=$($cli_target getblock $import_blkhash | jq '.height')
-import_blktime=$($cli_target getblock $import_blkhash | jq '.time')
-import_info=$($cli_target getimports $import_block)
+import_blkhash=$($cli_target gettransaction $sent_iTX | jq -r '.blockhash')
+echo "$cli_target gettransaction $sent_iTX | jq -r '.blockhash'"
+echo "import_blkhash: $import_blkhash"
+echo "-----------------------------------------------------"
+import_blkheight=$($cli_target getblock $import_blkhash | jq -r '.height')
+echo "$cli_target getblock $import_blkhash | jq -r '.height'"
+echo "import_blkheight: $import_blkheight"
+echo "-----------------------------------------------------"
+import_blktime=$($cli_target getblock $import_blkhash | jq -r '.time')
+echo "$cli_target getblock $import_blkhash | jq -r '.time'"
+echo "import_blktime: $import_blktime"
+echo "-----------------------------------------------------"
+import_info=$($cli_target getimports $import_blkheight)
+echo "$cli_target getimports $import_blkheight"
+echo "import_info: $import_info"
+echo "-----------------------------------------------------"
 
-export_blkhash=$($cli_source gettransaction $sent_TX | jq '.blockhash')
-export_blkheight=$($cli_source getblock $export_blkhash | jq '.height')
-export_blktime=$($cli_source getblock $import_blkhash | jq '.time')
+export_blkhash=$($cli_source gettransaction $sentTX |  jq -r '.blockhash')
+echo "$cli_source gettransaction $sentTX |  jq -r '.blockhash'"
+echo "export_blkhash: $export_blkhash"
+echo "-----------------------------------------------------"
+export_blkheight=$($cli_source getblock $(echo $export_blkhash) | jq -r '.height')
+echo "$cli_source getblock $(echo $export_blkhash) | jq -r '.height'"
+echo "export_blkheight: $export_blkheight"
+echo "-----------------------------------------------------"
+export_blktime=$($cli_source getblock $export_blkheight | jq -r '.time')
+echo "$cli_source getblock $export_blkheight | jq -r '.time'"
+echo "export_blktime: $export_blktime"
+echo "-----------------------------------------------------"
 
-migrate_json='{"export_txid":"'${sentTX}'","import_txid":"'${sent_iTX}'","amount":'${amount}',"to_address":"'${trg_addr}'","from_chain":"'${source}'","to_chain":"'${target}'","export_blkheight":"'${export_blkheight}'","import_blkheight":"'${import_blkheight}'"}'
-echo "migrate_json: $migrate_json"
-
+migrate_json='[{"export_txid":"'${sentTX}'","import_txid":"'${sent_iTX}'","amount":'${amount}',"to_address":"'${trg_addr}'","from_chain":"'${source}'","to_chain":"'${target}'","export_blkheight":"'${export_blkheight}'","import_blkheight":"'${import_blkheight}'"}]'
 
 echo "sent_iTX: $sent_iTX" >> $result_logfile
-echo -e "${col_green}[$source] : Confirmed export $sent_TX at ${export_blktime} ($runTime sec) on block ${export_blkheight}${col_default}"
+echo -e "${col_green}[$source] : Confirmed export $sentTX at ${export_blktime} ($runTime sec) on block ${export_blkheight}${col_default}"
 echo -e "${col_green}[$target] : Confirmed import $sent_iTX at ${import_blktime} ($runTime sec) on block ${import_blkheight}${col_default}"
 echo -e "${col_green}[$target] : Confirmed import $sent_iTX at ${import_blktime} ($runTime sec) on block ${import_blkheight}${col_default}" >> $result_logfile
 echo "********************************************************************************************************************************" >> $result_logfile
