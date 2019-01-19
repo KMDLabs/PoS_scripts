@@ -205,7 +205,7 @@ while counter_raw > 0:
     payouts_list.append(payouts)
     signed_hex = rpc_connection_sourcechain.signrawtransaction(export_funded_transaction)
     signed_hex_list.append(signed_hex)
-    signed_hex_str_list.append(str(signed_hex))
+    signed_hex_str_list.append(str(signed_hex["hex"]))
     sent_tx = rpc_connection_sourcechain.sendrawtransaction(signed_hex["hex"])
     if len(sent_tx) != 64:
         print(signed_hex)
@@ -232,6 +232,7 @@ with open(hex_filename, "a+") as export_hex_str_file:
 
 print("Payouts saved to: " + payouts_filename + "\n")
 print("Export txids saved to: " + export_filename + "\n")
+print("Export Hex saved to: " + hex_filename + "\n")
 
 print(str(len(sent_tx_list)) + " export transactions sent:\n")
 for sent_tx in sent_tx_list:
