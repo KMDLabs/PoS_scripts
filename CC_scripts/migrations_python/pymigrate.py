@@ -1,17 +1,76 @@
+#!/usr/bin/env python3
+
 from slickrpc import Proxy
 import queue
 from threading import Thread
 import threading
 import time
+from slickrpc import Proxy
+import sys
+import datetime
+import os
+import json
+import re
+import platform
+import calendar
 
-BROADCASTED_EXPORT_TXS = 0
-CONFIRMED_EXPORT_TXS = 0
-CONFIRMED_IMPORT_TXS = 0
-BROADCASTED_IMPORT_TXS = 0
-IMPORT_TXS_CREATED = 0
-IMPORT_TXS_COMPLETED = 0
-BRK = []
-list_threads = []
+
+def selectRangeInt(low,high, msg):
+    while True:
+        try:
+            number = int(input(msg))
+        except ValueError:
+            print("integer only, try again")
+            continue
+        if low <= number <= high:
+            return number
+        else:
+            print("input outside range, try again")
+
+def selectRangeFloat(low,high, msg):
+    while True:
+        try:
+            number = float(input(msg))
+        except ValueError:
+            print("integer only, try again")
+            continue
+        if low <= number <= high:
+            return number
+        else:
+            print("input outside range, try again")
+
+# define function that fetchs rpc creds from .conf
+def def_credentials(chain):
+    rpcport ='';
+    operating_system = platform.system()
+    if operating_system == 'Darwin':
+        ac_dir = os.environ['HOME'] + '/Library/Application Support/Komodo'
+    elif operating_system == 'Linux':
+        ac_dir = os.environ['HOME'] + '/.komodo'
+    elif operating_system == 'Win64':
+        ac_dir = "dont have windows machine now to test"
+    if chain == 'KMD':
+        coin_config_file = str(ac_dir + '/komodo.conf')
+    else:
+        coin_config_file = str(ac_dir + '/' + chain + '/' + chain + '.conf')
+    with open(coin_config_file, 'r') as f:
+        for line in f:
+            l = line.rstrip()
+            if re.search('rpcuser', l):
+                rpcuser = l.replace('rpcuser=', '')
+            elif re.search('rpcpassword', l):
+                rpcpassword = l.replace('rpcpassword=', '')
+            elif re.search('rpcport', l):
+                rpcport = l.replace('rpcport=', '')
+    if len(rpcport) == 0:
+        if chain == 'KMD':
+            rpcport = 7771
+        else:
+            print("rpcport not in conf file, exiting")
+            print("check "+coin_config_file)
+            exit(1)
+
+    return(Proxy("http://%s:%s@127.0.0.1:%d"%(rpcuser, rpcpassword, int(rpcport))))
 
 def print_balance(rpc_connection_source, rpc_connection_destination):
 	balance_source = rpc_connection_source.getbalance()
@@ -22,20 +81,67 @@ def print_balance(rpc_connection_source, rpc_connection_destination):
 	print("Destination chain " + destination_chain_name + " balance: " + str(balance_destination) + "\n")
 
 
-# SET RPC CONNECTION DETAILS HERE
-rpc_connection_sourcechain = Proxy("http://%s:%s@127.0.0.1:%d"%("user3441101764", "passcdc9bfc36fb5d205c024c4b75ee817d204d0d8b97933d21d43d3077ff1ee9a5e96", 30667))
-rpc_connection_destinationchain = Proxy("http://%s:%s@127.0.0.1:%d"%("user645213965", "pass3ac2d5536e45be1bd62920532f32c9acd8719ea618e35128b63eb36728ef62a632", 50609))
-rpc_connection_kmdblockchain = Proxy("http://%s:%s@127.0.0.1:%d"%("userRhoJlQBIA4Femhjkf7qXd7ElHFzFzYH0HwlhwWqh", "passwordTZFrh2CK1H1wYUDfipSpu9CfkZusUVuSpNm6mD886", 7771))
+assetChains = []
+ccids = []
+ID=1
+HOME = os.environ['HOME']
 
-rpc_connection_sourcechain_2 = Proxy("http://%s:%s@127.0.0.1:%d"%("user3441101764", "passcdc9bfc36fb5d205c024c4b75ee817d204d0d8b97933d21d43d3077ff1ee9a5e96", 30667))
-rpc_connection_sourcechain_3 = Proxy("http://%s:%s@127.0.0.1:%d"%("user3441101764", "passcdc9bfc36fb5d205c024c4b75ee817d204d0d8b97933d21d43d3077ff1ee9a5e96", 30667))
-rpc_connection_destinationchain_1 = Proxy("http://%s:%s@127.0.0.1:%d"%("user645213965", "pass3ac2d5536e45be1bd62920532f32c9acd8719ea618e35128b63eb36728ef62a632", 50609))
+try:
+    with open(HOME + '/StakedNotary/assetchains.json') as file:
+        assetchains = json.load(file)
+except Exception as e:
+    print(e)
+    print("Trying alternate location for file")
+    with open(HOME + '/staked/assetchains.json') as file:
+        assetchains = json.load(file)
+
+for chain in assetchains:
+    print(str(ID).rjust(3) + ' | ' + (chain['ac_name']+" ("+chain['ac_cc']+")").ljust(12))
+    ID+=1
+    assetChains.append(chain['ac_name'])
+    ccids.append(chain['ac_cc'])
+src_index = selectRangeInt(1,len(assetChains),"Select source chain: ")
+src_chain = assetChains[src_index-1]
+rpc_connection_sourcechain = def_credentials(src_chain)
 
 
-# SET ADDRESS AND MIGRATION AMOUNT HERE
-address = "R9M8p4yH7TEjYdttFku2xjf1K7VvUuck5B"
-amount = 1
-target_migrations = 777
+ccid=ccids[src_index-1]
+assetChains = []
+ID=1
+
+
+for chain in assetchains:
+    if ccid == chain['ac_cc'] and src_chain != chain['ac_name']:
+        print(str(ID).rjust(3) + ' | ' + (chain['ac_name']+" ("+chain['ac_cc']+")").ljust(12))
+        ID+=1
+        assetChains.append(chain['ac_name'])
+if ID != 1:
+    dest_chain = selectRangeInt(1,len(assetChains),"Select destination chain: ")
+else:
+    print('No other asset chains with the same cc_id to migrate to, exiting')
+    exit(0)
+rpc_connection_destinationchain = def_credentials(assetChains[dest_chain-1])
+
+rpc_connection_kmdblockchain = def_credentials('KMD')
+migrations_amount = selectRangeInt(1,5000,"How many migrations?: ")
+target_migrations = migrations_amount
+balance=rpc_connection_sourcechain.getbalance()
+max_per_loop=balance/migrations_amount
+amount = selectRangeFloat(0,max_per_loop,"Amount of funds to send per migration (max: "+str(max_per_loop)+"): ")
+
+addresses = rpc_connection_destinationchain.listaddressgroupings()
+
+address = addresses[0][0][0]
+print('sending to '+address)
+ 
+BROADCASTED_EXPORT_TXS = 0
+CONFIRMED_EXPORT_TXS = 0
+CONFIRMED_IMPORT_TXS = 0
+BROADCASTED_IMPORT_TXS = 0
+IMPORT_TXS_CREATED = 0
+IMPORT_TXS_COMPLETED = 0
+BRK = []
+list_threads = []
 
 print_balance(rpc_connection_sourcechain, rpc_connection_destinationchain)
 
@@ -185,7 +291,7 @@ def print_imports():
 			else:
 				migrations_per_second = (t1 - t0) / imports_counter
 			if thread_new_txns.isAlive():
-				print("Press Enter to quit before " + str(target_migrations) + " completed.")
+				print("Press Enter to quit before " + str(target_migrations) + " broadcasted.")
 			else:
 				print("Running remaining tx's through the migration routine")
 			print("Currently running " + str(threading.active_count() - 2) + " Threads")
@@ -243,11 +349,11 @@ thread_export_txs = Thread(target=create_export_txs, args=(rpc_connection_source
 list_threads.append(thread_export_txs)
 
 # thread which waiting for 1 confirmation on the source chain (estabilishing independed rpc proxy for each thread)
-thread_wait_export_confirmation = Thread(target=check_if_confirmed_export, args=(rpc_connection_sourcechain_2, export_tx_queue, confirmed_export_queue,))
+thread_wait_export_confirmation = Thread(target=check_if_confirmed_export, args=(rpc_connection_sourcechain, export_tx_queue, confirmed_export_queue,))
 list_threads.append(thread_wait_export_confirmation)
 
 # thread which creating import transactions
-thread_import_txs = Thread(target=create_import_txs, args=(rpc_connection_sourcechain_3, confirmed_export_queue, import_tx_queue,))
+thread_import_txs = Thread(target=create_import_txs, args=(rpc_connection_sourcechain, confirmed_export_queue, import_tx_queue,))
 list_threads.append(thread_import_txs)
 
 # thread which complete import txs on KMD chain
@@ -259,7 +365,7 @@ thread_broadcast_destination = Thread(target=broadcast_on_destinationchain, args
 list_threads.append(thread_broadcast_destination)
 
 # thread which waiting for 1 confirmation on destination chain
-thread_wait_import_confirmation = Thread(target=check_if_confirmed_import, args=(rpc_connection_destinationchain_1, broadcasted_on_dest_queue, confirmed_on_dest_queue,))
+thread_wait_import_confirmation = Thread(target=check_if_confirmed_import, args=(rpc_connection_destinationchain, broadcasted_on_dest_queue, confirmed_on_dest_queue,))
 list_threads.append(thread_wait_import_confirmation)
 
 # printer thread
