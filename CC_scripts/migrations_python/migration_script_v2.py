@@ -179,7 +179,7 @@ addresses = rpc_connection_destinationchain.listaddressgroupings()
 try:
     address = addresses[0][0][0]
 except Exception as e:
-    address = str(input("Address not found enter address: ")
+    address = str(input('Address not found enter address: ')
 
 # SET ADDRESS HERE
 #address = "RHq3JsvLxU45Z8ufYS6RsDpSG4wi6ucDev"
