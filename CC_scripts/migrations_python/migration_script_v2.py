@@ -80,14 +80,14 @@ def migrate_import_transactions(rpc_connection, import_tx, complete_tx_list):
 def broadcast_on_destinationchain(rpc_connection, complete_tx, dest_tx_list):
     attempts = 0
     while True:
-        if attempts < 60:
+        if attempts < 100:
             try:
                 sent_itx = rpc_connection.sendrawtransaction(complete_tx)
             except Exception:
                 attempts = attempts + 1
                 print("Tried to broadcast " + str(attempts) + " times")
-                print("Will try to do it up to 60 times in total. Now rest for 15 seconds.")
-                time.sleep(15)
+                print("Will try to do it up to 500 times in total. Now rest for 15 seconds.")
+                time.sleep(60)
             else:
                 print("Transactinon broadcasted on destination chain")
                 dest_tx_list.append(sent_itx)
