@@ -176,12 +176,14 @@ max_per_loop=balance/migrations_amount
 amount = selectRangeFloat(0,max_per_loop,"Amount of funds to send per migration (max: "+str(max_per_loop)+"): ")
 
 addresses = rpc_connection_destinationchain.listaddressgroupings()
-
-address = addresses[0][0][0]
-print('sending to '+address)
+try:
+    address = addresses[0][0][0]
+except Exception as e:
+    address = str(input("Address not found enter address: ")
 
 # SET ADDRESS HERE
 #address = "RHq3JsvLxU45Z8ufYS6RsDpSG4wi6ucDev"
+print('sending to '+address)
 
 t0 = time.time()
 
