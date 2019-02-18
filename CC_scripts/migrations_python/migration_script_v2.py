@@ -86,7 +86,7 @@ def broadcast_on_destinationchain(rpc_connection, complete_tx, dest_tx_list):
             except Exception:
                 attempts = attempts + 1
                 print("Tried to broadcast " + str(attempts) + " times")
-                print("Will try to do it up to 500 times in total. Now rest for 15 seconds.")
+                print("Will try to do it up to 100 times in total. Now rest for 60 seconds.")
                 time.sleep(60)
             else:
                 print("Transactinon broadcasted on destination chain")
