@@ -8,7 +8,7 @@ waitforconfirm () {
     sleep 15
     confirmations=$($2 gettransaction $1 | jq -r .confirmations)
     # Keep re-broadcasting
-    $2 getrawtransaction $1 > logs/tx/$1
+    #$2 getrawtransaction $1 > logs/tx/$1
     $2 sendrawtransaction $($2 getrawtransaction $1) > /dev/null 2>&1
   done
 }
@@ -20,12 +20,14 @@ printbalance () {
   echo "[$target] : $tgt_balance"
 }
 
+# set chains and the address, is the address you are sending TO on the target chain. It must be imported on the target.
 source=STAKEDB1
 target=STAKEDW1
 address="RAwx45zENMPa2p4AGnGmbrFEw6wtGoUXi6"
 amount=1
 
 # Alias for running cli
+# make sure this points to the path komodo-cli is actaully at.
 cli_target="komodo-cli -ac_name=$target"
 cli_source="komodo-cli -ac_name=$source"
 
@@ -101,7 +103,7 @@ while [[ $sent -eq 0 ]]; do
     exit
   else
     tries=$(( $tries +1 ))
-    if [[ $tries -ge 60 ]]; then
+    if [[ $tries -ge 90 ]]; then
       echo "------------------------------------------------------------"
       echo "Failed Import TX on $target at $(date)"
       echo "Exiting after 90 tries: $completeTX"
