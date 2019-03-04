@@ -37,7 +37,7 @@ echo "Sending $amount from $source to $target at $(date)"
 # Raw tx that we will work with
 txraw=`$cli_source createrawtransaction "[]" "{\"$address\":$amount}"`
 # Convert to an export tx
-exportData=`$cli_source migrate_converttoexport $txraw $target $amount`
+exportData=`$cli_source migrate_converttoexport $txraw $target`
 exportRaw=`echo $exportData | jq -r .exportTx`
 # Fund it
 exportFundedData=`$cli_source fundrawtransaction $exportRaw`
