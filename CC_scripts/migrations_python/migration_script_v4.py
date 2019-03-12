@@ -168,7 +168,7 @@ def broadcast_on_destinationchain(rpc_connection, kmd_rpc_connection, export, in
             sent_itx = rpc_connection.sendrawtransaction(export['import_tx_kmd'])
         except Exception as p:
             #print(str(p))
-            if str(p) == "sendrawtransaction: 18: import tombstone exists (code -26)" or str(p) == "sendrawtransaction: 18: transaction already in block chain (code -27)":
+            if str(p) == "sendrawtransaction: 18: import tombstone exists (code -26)" or str(p) == "sendrawtransaction: transaction already in block chain (code -27)":
                 print(colorize('Import is already completed.... exiting thread', 'red'))
                 return(0)
             if attempts > backup_limit:
@@ -179,7 +179,7 @@ def broadcast_on_destinationchain(rpc_connection, kmd_rpc_connection, export, in
                         sent_itx = rpc_connection.sendrawtransaction(export['import_tx_kmd_backup'])
                     except Exception as e:
                         #print(str(e))
-                        if p == "sendrawtransaction: 18: import tombstone exists (code -26)" or p == "sendrawtransaction: 18: transaction already in block chain (code -27)":
+                        if str(e) == "sendrawtransaction: 18: import tombstone exists (code -26)" or str(e) == "sendrawtransaction: transaction already in block chain (code -27)":
                             print(colorize('Import is already completed.... exiting thread', 'red'))
                             return(0)
             attempts = attempts + 1
