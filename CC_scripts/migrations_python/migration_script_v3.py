@@ -99,11 +99,11 @@ def broadcast_on_destinationchain(rpc_connection, export):
             sent_itx = rpc_connection.sendrawtransaction(export['import_tx_kmd'])
         except Exception as p:
             print(str(p))
-            if attempts > 15:
+            if attempts > 20:
                 if not 'import_tx_kmd_backup' in export or export['import_tx_kmd_backup'] == 0:
                     export['import_tx_kmd_backup'] = create_backup_importtx(export)
                 if export['import_tx_kmd_backup'] != 0:
-                    #print(export['import_tx_kmd_backup'])
+                    print(export['import_tx_kmd_backup'])
                     try:
                         sent_itx = rpc_connection.sendrawtransaction(export['import_tx_kmd_backup'])
                     except Exception as e:
@@ -111,7 +111,7 @@ def broadcast_on_destinationchain(rpc_connection, export):
             attempts = attempts + 1
             print("Tried to broadcast " + str(attempts) + " times")
             print("Will try to do it up to 90 times in total. Now rest for 60 seconds.")
-            time.sleep(30)
+            time.sleep(60)
         if sent_itx != 0 and len(sent_itx) == 64:
             return sent_itx
     print('Failed to import the export transaction' + export['src_txid'])
@@ -278,13 +278,23 @@ else:
     except Exception as e:
         sys.exit(e)
 
-    
+
 # Wait for a notarization on source for each export tx.
-confirmed = 0
 for i in range(0, len(export_list)):
-    while int(rpc_connection_sourcechain.gettransaction(export_list[i]['src_txid'])["confirmations"]) < 2:
-        print("Waiting for export transaction " + export_list[i]['src_txid'] + " to be notarized on source chain...")
-        time.sleep(60)
+    finished = False
+    while finished == False:
+        ret = 0
+        try: 
+            ret = rpc_connection_sourcechain.getrawtransaction(export_list[i]['src_txid'], 1)["confirmations"]
+        except Exception as e:
+            print(str(export_list[i]['src_txid']) + ' not yet confirmed, waiting 30s...')
+            time.sleep(30)
+        if ret >= 2:
+            print(str(export_list[i]['src_txid']) + ' has ' + str(ret) + ' confirmations on ' + str(dest_chain) + ' at ' + str(time.time()))
+            finished = True
+        elif ret == 1:
+            print(str(export_list[i]['src_txid']) + ' not yet notarized, waiting 60s...')
+            time.sleep(60)
 
 
 # Use migrate_createimporttransaction to create the import TX

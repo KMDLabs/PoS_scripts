@@ -1,17 +1,36 @@
-Dependencies:
+### Dependencies
 
-pip3 install setuptools wheel slick-bitcoinrpc
+```shell
+sudo apt-get install python3-dev
+sudo apt-get install python3 libgnutls28-dev libssl-dev
+sudo apt-get install python3-pip
+pip3 install base58 slick-bitcoinrpc
+```
 
-Change this data to setup the migration:
+staked or stakednotary repos and the coin daemons running, including KMD. 
 
-# SET RPC CONNECTION DETAILS HERE
-rpc_connection_sourcechain = Proxy("http://%s:%s@127.0.0.1:%d"%("user", "pass", 30667))
-rpc_connection_destinationchain = Proxy("http://%s:%s@127.0.0.1:%d"%("user", "pass", 50609))
-rpc_connection_kmdblockchain = Proxy("http://%s:%s@127.0.0.1:%d"%("user", "pass", 7771))
-# SET ADDRESS AND MIGRATION AMOUNT HERE
-address = "RHq3JsvLxU45Z8ufYS6RsDpSG4wi6ucDev"
-amount = 0.1
+https://github.com/KMDLabs/staked
 
-Run as:
+https://github.com/KMDLabs/StakedNotary
 
-python3 migration_script.py
+### Setup of script 
+
+You need to set the LOG_DIR at the top of the v4 script. 
+example 
+```shell
+# set your log directory here, make sure the directory exists. All exports and failed imports will be logged here.
+# without this funds can be lost!
+LOG_DIR = '/home/test/migrate_logs/'
+```
+
+To resume a failed migrate simply start the script like so:
+
+`python3 migration_script_v4.py /home/test/migrate_logs/exports_1552382813.txt`
+
+To start a new migration just run the script like this: 
+
+`python3 migration_script_v4.py`
+
+Then follow the prompts. 
+
+### Suggested to only use v4 script!
