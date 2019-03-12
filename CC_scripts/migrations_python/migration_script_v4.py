@@ -214,7 +214,7 @@ def do_migrate(src, dest, sent_tx, payouts, signed_hex, index):
             print(index + 'Waiting for ' + colorize('confirmation','green') + ' for: ' + str(export['src_txid']))
             time.sleep(30)
         if ret >= 2:
-            print(index + str(export['src_txid']) + ' is ' + colorize('notarized','blue') + ' on ' + str(dest_chain) + ' after ' + str(ret) + colorize(' confirmations','green'))
+            print(index + str(export['src_txid']) + ' is ' + colorize('notarized','blue') + ' on ' + str(src) + ' after ' + str(ret) + colorize(' confirmations','green'))
             finished = True
         elif ret == 1:
             print(index + 'Waiting for ' + colorize('notarization','blue') + ' for: ' + str(export['src_txid']))
@@ -245,7 +245,7 @@ def do_migrate(src, dest, sent_tx, payouts, signed_hex, index):
                 print(index + 'Waiting for ' + colorize('confirmation','green') + ' for: ' + str(export['dest_txid']))
                 time.sleep(30)
             if ret >= 1:
-                print(index + str(export['dest_txid']) + ' has ' + str(ret) + colorize(' confirmations','green') + ' on ' + str(dest_chain))
+                print(index + str(export['dest_txid']) + ' has ' + str(ret) + colorize(' confirmations','green') + ' on ' + str(dest))
                 finished = True
 
 
