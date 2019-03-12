@@ -142,51 +142,58 @@ def sign_momom_hash(rpc_connection, import_tx, offset, index):
 
 
 # if the import transaction is failing, we will try to use a diffrent MoMoM hash signing on KMD to sledgehammer it through.
-def create_backup_importtx(rpc_connection, export, index):
+def create_backup_importtx(rpc_connection, export, index, txns_used):
     offset = 0
-    while offset < 20:
+    while offset < 77:
         offset = offset + 1
         ret = sign_momom_hash(rpc_connection, export['import_tx_src'], offset, index)
         if ret == -1:
-            break
-        if ret != 0 and ret != export['import_tx_kmd']:
+            return("0")
+        if ret != 0 and not ret in txns_used:
             print(index + colorize('Created backup import tx', 'red'))
             return(ret)
-    return(0)
+    return("0")
+
+
+# function to try and broadcast the transaction on destination chain
+def sendrawtransaction_dest(rpc_connection, signed_hex, index):
+    txid_sent = "0"
+    try:
+        txid_sent = rpc_connection.sendrawtransaction(signed_hex)
+    except Exception as e:
+        print(str(e))
+        if str(e) == "sendrawtransaction: 18: import tombstone exists (code -26)" or str(e) == "sendrawtransaction: transaction already in block chain (code -27)":
+            print(index + colorize('Import is already completed.... exiting thread', 'red'))
+            return(-1)
+    return(txid_sent)
 
 
 def broadcast_on_destinationchain(rpc_connection, kmd_rpc_connection, export, index):
     attempts = 0
-    sent_itx = 0
+    dest_txid = 0
+    sent_itx = "0"
+    txns_used = []
+    txns_used.append(export['import_tx_kmd'])
     dest = rpc_connection.getinfo()['name']
     if len(sys.argv) == 2:
         backup_limit = 1
     else:
         backup_limit = 15
     while attempts < 90:
-        try:
-            sent_itx = rpc_connection.sendrawtransaction(export['import_tx_kmd'])
-        except Exception as p:
-            #print(str(p))
-            if str(p) == "sendrawtransaction: 18: import tombstone exists (code -26)" or str(p) == "sendrawtransaction: transaction already in block chain (code -27)":
-                print(colorize('Import is already completed.... exiting thread', 'red'))
-                return(0)
-            if attempts > backup_limit:
-                if not 'import_tx_kmd_backup' in export or export['import_tx_kmd_backup'] == 0:
-                    export['import_tx_kmd_backup'] = create_backup_importtx(kmd_rpc_connection, export, index)
-                if export['import_tx_kmd_backup'] != 0:
-                    try:
-                        sent_itx = rpc_connection.sendrawtransaction(export['import_tx_kmd_backup'])
-                    except Exception as e:
-                        #print(str(e))
-                        if str(e) == "sendrawtransaction: 18: import tombstone exists (code -26)" or str(e) == "sendrawtransaction: transaction already in block chain (code -27)":
-                            print(colorize('Import is already completed.... exiting thread', 'red'))
-                            return(0)
-            attempts = attempts + 1
-            print(index + "Waiting for MoMoM notarization on " + str(dest) + "... Attempts: " + str(attempts))
-            time.sleep(60)
-        if sent_itx != 0 and len(sent_itx) == 64:
-            return sent_itx
+        sent_itx = sendrawtransaction_dest(rpc_connection, export['import_tx_kmd'], index)
+        if str(sent_itx) == "-1":
+            return(0)
+        if str(sent_itx) == "0" and attempts > backup_limit:
+            backup_txn = create_backup_importtx(kmd_rpc_connection, export, index, txns_used)
+            if backup_txn != "0":
+                txns_used.append(backup_txn)
+            for txn in txns_used:
+                sent_itx = sendrawtransaction_dest(rpc_connection, txn, index)
+                if sent_itx != "0" and len(sent_itx) == 64:
+                    return sent_itx
+        attempts = attempts + 1
+        print(index + "Waiting for MoMoM notarization on " + str(dest) + "... Attempts: " + str(attempts))
+        time.sleep(60)
     print(index + colorize('Failed to import the export transaction' + export['src_txid'], 'red'))
     with open(failed_filename, "a+") as failed_imports_file:
         failed_imports_file.write("%s\n" % json.dumps(export))
