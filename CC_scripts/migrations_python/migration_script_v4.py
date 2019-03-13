@@ -197,7 +197,7 @@ def broadcast_on_destinationchain(rpc_connection, kmd_rpc_connection, export, in
                 if sent_itx != "0" and len(sent_itx) == 64:
                     return sent_itx
         attempts = attempts + 1
-        print(index + "Waiting for MoMoM notarization on " + str(dest) + "... Attempts: " + str(attempts) + ' sent_itx: ' + str(sent_itx))
+        print(index + "Waiting for MoMoM notarization on " + str(dest) + "... Attempts: " + str(attempts))
         time.sleep(60)
     print(index + colorize('Failed to import the export transaction' + export['src_txid'], 'red'))
     with open(failed_filename, "a+") as failed_imports_file:
