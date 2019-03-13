@@ -108,6 +108,7 @@ def print_balance(rpc_connection_source, rpc_connection_destination):
     print("Destination chain " + destination_chain_name + " balance: " + str(balance_destination))
 
 
+# Create import tx on source chain 
 def create_import_transaction(rpc_connection, signed_hex, payouts, index):
     while True:
         try:
@@ -120,9 +121,9 @@ def create_import_transaction(rpc_connection, signed_hex, payouts, index):
         return import_tx
 
 
-# adds the MoMoM hash to the import tx on the KMD chain.
+# adds a MoMoM hash to the import tx on the KMD chain.
 def sign_momom_hash(rpc_connection, import_tx, offset, index):
-    complete_tx = ""
+    complete_tx = "0"
     while True:
         try:
             complete_tx = rpc_connection.migrate_completeimporttransaction(import_tx, offset)
@@ -132,12 +133,10 @@ def sign_momom_hash(rpc_connection, import_tx, offset, index):
                 return(-1)
             if str(e) == "migrate_completeimporttransaction: Couldn't find MoM within MoMoM set (code -1)":
                 return(-1)
-            if str(e) != "migrate_completeimporttransaction: Cannot find notarisation for target inclusive of source (code -1)":
-                return(0)
-            print(index + 'Waiting for enough MoMoM notarizations on KMD')
+            print(index + 'Waiting for enough MoM notarizations on KMD')
             time.sleep(60)
             continue
-        if complete_tx != "":
+        if complete_tx != "0":
             return complete_tx
 
 
@@ -149,8 +148,8 @@ def create_backup_importtx(rpc_connection, export, index, txns_used):
         ret = sign_momom_hash(rpc_connection, export['import_tx_src'], offset, index)
         if ret == -1:
             return("0")
-        if ret != 0 and not ret in txns_used:
-            print(index + colorize('Created backup import tx', 'red'))
+        if not ret in txns_used:
+            print(index + colorize('Created backup import tx no: ' + str(len(txns_used)), 'red'))
             return(ret)
     return("0")
 
@@ -161,13 +160,15 @@ def sendrawtransaction_dest(rpc_connection, signed_hex, index):
     try:
         txid_sent = rpc_connection.sendrawtransaction(signed_hex)
     except Exception as e:
-        print(str(e))
+        #print(str(e))
         if str(e) == "sendrawtransaction: 18: import tombstone exists (code -26)" or str(e) == "sendrawtransaction: transaction already in block chain (code -27)":
             print(index + colorize('Import is already completed.... exiting thread', 'red'))
             return(-1)
     return(txid_sent)
 
 
+# function to send import transaction, we need to use the above functions to choose a MoMoM hash that is present on the target chain,
+# there is such a large range avalible eventually one of them will have a match, unless notarizations have stopped. 
 def broadcast_on_destinationchain(rpc_connection, kmd_rpc_connection, export, index):
     attempts = 0
     dest_txid = 0
@@ -178,21 +179,25 @@ def broadcast_on_destinationchain(rpc_connection, kmd_rpc_connection, export, in
     if len(sys.argv) == 2:
         backup_limit = 1
     else:
-        backup_limit = 15
+        backup_limit = 10
     while attempts < 90:
         sent_itx = sendrawtransaction_dest(rpc_connection, export['import_tx_kmd'], index)
         if str(sent_itx) == "-1":
             return(0)
+        if sent_itx != "0" and len(sent_itx) == 64:
+            return sent_itx
         if str(sent_itx) == "0" and attempts > backup_limit:
             backup_txn = create_backup_importtx(kmd_rpc_connection, export, index, txns_used)
             if backup_txn != "0":
                 txns_used.append(backup_txn)
             for txn in txns_used:
+                if export['import_tx_kmd'] == txn:
+                    continue
                 sent_itx = sendrawtransaction_dest(rpc_connection, txn, index)
                 if sent_itx != "0" and len(sent_itx) == 64:
                     return sent_itx
         attempts = attempts + 1
-        print(index + "Waiting for MoMoM notarization on " + str(dest) + "... Attempts: " + str(attempts))
+        print(index + "Waiting for MoMoM notarization on " + str(dest) + "... Attempts: " + str(attempts) + ' sent_itx: ' + str(sent_itx))
         time.sleep(60)
     print(index + colorize('Failed to import the export transaction' + export['src_txid'], 'red'))
     with open(failed_filename, "a+") as failed_imports_file:
@@ -231,7 +236,7 @@ def do_migrate(src, dest, sent_tx, payouts, signed_hex, index):
     # Use migrate_completeimporttransaction on KMD to sign the MoMoM hash. 
     while True:
         ret = sign_momom_hash(rpc_kmdblockchain, export['import_tx_src'], 0, index)
-        if ret == -1 or ret == 0:
+        if ret == -1:
             time.sleep(30)
             continue
         else:
@@ -380,7 +385,7 @@ else:
         t = threading.Thread(target=do_migrate, args=(src_chain, dest_chain, sent_tx, payouts, signed_hex, index))
         thread_list.append(t)
         thread_list[len(thread_list)-1].start()
-        
+
 for thread in thread_list:
     thread.join()
 
