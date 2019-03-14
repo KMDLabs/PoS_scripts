@@ -14,7 +14,12 @@ import calendar
 
 # set your log directory here, make sure the directory exists. All exports and failed imports will be logged here.
 # without this funds can be lost!
-LOG_DIR = '/home/test/migrate_logs/'
+
+path = os.environ['HOME']+'/migrate_logs/'
+if os.path.exists(path) is False:
+	os.mkdir(path)
+
+LOG_DIR = os.environ['HOME']+'/migrate_logs/'
 
 
 # define function that fetchs rpc creds from .conf
