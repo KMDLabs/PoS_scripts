@@ -318,7 +318,7 @@ if len(exports_filename) == 0:
     rpc_connection_destinationchain = def_credentials(dest_chain)
 
     migrations_amount = selectRangeInt(1,5000,colorize("How many migrations?: ", 'green'))
-    sleepy_time = selectRangeInt(1,5000,colorize("How long to wait between each export?: ", 'green'))
+    sleepy_time = selectRangeInt(2,5000,colorize("Seconds between each import: ", 'green'))
     balance=rpc_connection_sourcechain.getbalance()
     max_per_loop=balance/migrations_amount
     amount = selectRangeFloat(0,max_per_loop,colorize("Amount of funds to send per migration (max: "+str(max_per_loop)+"): ", 'green'))
@@ -393,6 +393,7 @@ else:
         t = threading.Thread(target=do_migrate, args=(src_chain, dest_chain, sent_tx, payouts, signed_hex, index))
         thread_list.append(t)
         thread_list[len(thread_list)-1].start()
+        time.sleep(0.005)
 
 for thread in thread_list:
     thread.join()
