@@ -223,6 +223,9 @@ def do_migrate(src, dest, sent_tx, payouts, signed_hex, index):
         try: 
             ret = rpc_sourcechain.getrawtransaction(export['src_txid'], 1)["confirmations"]
         except Exception as e:
+            if str(e) == "getrawtransaction: No information available about transaction (code -5)":
+                print(index + colorize('Export transaction never sent exiting thread...','red'))
+                return(0)
             print(index + 'Waiting for ' + colorize('confirmation','green') + ' for: ' + str(export['src_txid']))
             time.sleep(30)
         if ret >= 2:
