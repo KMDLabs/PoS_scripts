@@ -123,7 +123,7 @@ def create_import_transaction(rpc_connection, signed_hex, payouts, index):
             print(index + "Back notarization not yet confirmed. Waiting 60s...")
             time.sleep(60)
             continue
-        return import_tx
+        return import_tx['ImportTxHex']
 
 
 # adds a MoMoM hash to the import tx on the KMD chain.
@@ -142,7 +142,7 @@ def sign_momom_hash(rpc_connection, import_tx, offset, index):
             time.sleep(60)
             continue
         if complete_tx != "0":
-            return complete_tx
+            return complete_tx['ImportTxHex']
 
 
 # if the import transaction is failing, we will try to use a diffrent MoMoM hash signing on KMD to sledgehammer it through.
