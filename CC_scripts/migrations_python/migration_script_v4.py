@@ -371,7 +371,6 @@ if len(exports_filename) == 0:
         export_obj['src_txid'] = sent_tx
         export_obj['payouts'] = payouts
         export_obj['src_hex'] = signed_hex
-        export_obj['size'] = export_ret['size']
         with open(exports_filename, "a+") as export_transactions_file:
             export_transactions_file.write("%s\n" % json.dumps(export_obj))
         t = threading.Thread(target=do_migrate, args=(src_chain, dest_chain, sent_tx, payouts, signed_hex, index))
