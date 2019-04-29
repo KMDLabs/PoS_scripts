@@ -257,6 +257,8 @@ def do_migrate(src, dest, sent_tx, payouts, signed_hex, index):
         export['dest_txid'] = ret
         # Wait for a confirmation on destination chain
         finished = False
+        if len(tokenid) == 64:
+            sys.exit("getrawtransaction is not working for token migrate tx. Check manually using txid above.")
         while finished == False:
             ret = 0
             try: 
@@ -317,23 +319,28 @@ if len(exports_filename) == 0:
     dest_chain = assetChains[dest_index-1]
     rpc_connection_destinationchain = def_credentials(dest_chain)
 
-    migrations_amount = selectRangeInt(1,5000,colorize("How many migrations?: ", 'green'))
-    sleepy_time = selectRangeInt(2,5000,colorize("Seconds between each import: ", 'green'))
-    balance=rpc_connection_sourcechain.getbalance()
-    max_per_loop=balance/migrations_amount
-    amount = selectRangeFloat(0,max_per_loop,colorize("Amount of funds to send per migration (max: "+str(max_per_loop)+"): ", 'green'))
-
-    addresses = rpc_connection_destinationchain.listaddressgroupings()
-    try:
-        address = addresses[0][0][0]
-    except:
-        address = str(input(colorize('Address not found enter address: ', 'green')))
-
-    print('sending to '+ address)
-
-    print_balance(rpc_connection_sourcechain, rpc_connection_destinationchain)
-
-    print("Sending " + str(amount*migrations_amount) + " coins from " + rpc_connection_sourcechain.getinfo()["name"] + " chain " +\
+    tokenid = str(input(colorize('If you want to send a token enter its tokenid: ', 'green')))
+    if len(tokenid) == 64:
+        migrations_amount = 1;
+        sleepy_time = 0;
+        amount = 1;
+        address = str(input(colorize('Enter token destination pubkey: ', 'green')))
+        print("Sending " + str(tokenid) + " from " + rpc_connection_sourcechain.getinfo()["name"] + " chain " +\
+          "to " + rpc_connection_destinationchain.getinfo()["name"] + " chain.")
+    else:
+        migrations_amount = selectRangeInt(1,5000,colorize("How many migrations?: ", 'green'))
+        sleepy_time = selectRangeInt(2,5000,colorize("Seconds between each import: ", 'green'))
+        balance=rpc_connection_sourcechain.getbalance()
+        max_per_loop=balance/migrations_amount
+        amount = selectRangeFloat(0,max_per_loop,colorize("Amount of funds to send per migration (max: "+str(max_per_loop)+"): ", 'green'))
+        addresses = rpc_connection_destinationchain.listaddressgroupings()
+        try:
+            address = addresses[0][0][0]
+        except:
+            address = str(input(colorize('Address not found enter address: ', 'green')))
+        print('sending to '+ address)
+        print_balance(rpc_connection_sourcechain, rpc_connection_destinationchain)
+        print("Sending " + str(amount*migrations_amount) + " coins from " + rpc_connection_sourcechain.getinfo()["name"] + " chain " +\
           "to " + rpc_connection_destinationchain.getinfo()["name"] + " chain, with " + str(migrations_amount) + " migrations.")
 
     counter_raw = migrations_amount
@@ -342,7 +349,10 @@ if len(exports_filename) == 0:
     while counter_raw > 0:
         index = colorize('[' + str(migrations_amount - counter_raw + 1) + ']: ', 'magenta')
         try:
-            export_ret = rpc_connection_sourcechain.migrate_createburntransaction(str(dest_chain), str(address), str(amount))
+            if len(tokenid) == 64:
+                export_ret = rpc_connection_sourcechain.migrate_createburntransaction(str(dest_chain), str(address), str(amount), str(tokenid))
+            else:
+                export_ret = rpc_connection_sourcechain.migrate_createburntransaction(str(dest_chain), str(address), str(amount))
         except Exception as e:
             if str(e) == "migrate_createburntransaction: You need to set -pubkey, or run setpukbey RPC, or imports are disabled on this chain. (code -1)":
                 pubkey = str(input(colorize('Need to set pubkey, enter a pubkey: ', 'green')))
@@ -371,6 +381,8 @@ if len(exports_filename) == 0:
         export_obj['src_txid'] = sent_tx
         export_obj['payouts'] = payouts
         export_obj['src_hex'] = signed_hex
+        if len(tokenid) == 64:
+            export_obj['tokenid'] = tokenid
         with open(exports_filename, "a+") as export_transactions_file:
             export_transactions_file.write("%s\n" % json.dumps(export_obj))
         t = threading.Thread(target=do_migrate, args=(src_chain, dest_chain, sent_tx, payouts, signed_hex, index))
@@ -393,7 +405,7 @@ else:
         t = threading.Thread(target=do_migrate, args=(src_chain, dest_chain, sent_tx, payouts, signed_hex, index))
         thread_list.append(t)
         thread_list[len(thread_list)-1].start()
-        time.sleep(0.005)
+        time.sleep(0.05)
 
 for thread in thread_list:
     thread.join()
