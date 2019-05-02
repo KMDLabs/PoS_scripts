@@ -257,8 +257,6 @@ def do_migrate(src, dest, sent_tx, payouts, signed_hex, index):
         export['dest_txid'] = ret
         # Wait for a confirmation on destination chain
         finished = False
-        if len(tokenid) == 64:
-            sys.exit("getrawtransaction is not working for token migrate tx. Check manually using txid above.")
         while finished == False:
             ret = 0
             try: 
